@@ -48,8 +48,14 @@ def cmp(x1, y1, x2, y2):
     if y2 <  y1: return 1
     return 0
 class Intervals:
-    def __init__(self):
-        self.root = None
+    def __init__(self, lo, hi):
+        self.root = Interval(lo, hi)
+    def _split(self, h, lo, hi):
+        if h is None: return
+        if not intersects(lo, hi, h.lo, h.hi):   return h
+        if l contains(h.l.inf, h.l.sup, lo, hi): return _split(h.l, h.r)
+        if contains(h.lo, h.hi, lo, hi):
+
     def add(self, lo, hi):
         self.root = self._add(self.root, lo, hi)
         self.root.clr = BLACK
