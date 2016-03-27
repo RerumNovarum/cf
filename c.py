@@ -1,3 +1,4 @@
+"""WA13; better take a loot at c.cpp"""
 import time
 
 def count(n, m, perm, bads):

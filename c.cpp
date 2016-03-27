@@ -15,17 +15,10 @@ ull count(int n, std::vector<int> &bad) {
   ull c = 0;
   for(; j < n; ++j) {
     if(bad[j] >= i) {
-      int new_i = bad[j] + 1;
-      ull delta_c = (j - i + 1)*(j - i)/2 - (j - new_i + 1)*(j - new_i)/2;
-      c += delta_c;
-      // std::cout << "(" << i << ", " << new_i - 1 << "): " << delta_c << std::endl;
-      i = new_i;
+      i = bad[j] + 1;
     }
+    c += j - i + 1;
   }
-  j -= 1;
-  ull delta_c = (j - i + 2)*(j - i + 1)/2;
-  c += delta_c;
-//  std::cout << "(" << i << ", " << j << "): " << delta_c << std::endl;
   return c;
 }
 
