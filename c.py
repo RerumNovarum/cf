@@ -1,90 +1,42 @@
-RED, BLACK = True, False
-def is_red(n):
-    return bool(n) and n.clr
-class Interval:
-    def __init__(self, lo, hi):
-        self.lo, self.hi, self.inf, self.sup = [lo, hi]*2
-        self.clr = RED
-        self.l, self.r = None, None
-def contains(x1, y1, x2, y2):
-    return x1 <= x2 and y2 <= y1
-def intersects(x1, y1, x2, y2):
-    return x1 <= x2 <= y1 or x2 <= x1 <= y2
-def flip_colors(h):
-    h.l.clr = h.clr
-    h.r.clr = h.clr
-    h.clr   = not h.clr
-def fix(h):
-    if h:
-        h.inf = h.l.inf if h.l else h.lo
-        h.sup = h.r.sup if h.r else h.hi
-def rot_fix(h, x):
-    fix(h)
-    fix(x)
-def rot_left(h):
-    x = h.r
-    h.r = x.l
-    x.l = h
-    rot_fix(h, x)
-    return x
-def rot_right(h):
-    x   = h.l
-    h.l = x.r
-    x.r = h
-    rot_fix(h, x)
-    return x
-def balance(h):
-    if is_red(h.r) and not is_red(h.l):
-        h = rot_left(h)
-    if is_red(h.l) and is_red(h.l.l):
-        h = rot_right(h)
-    if is_red(h.l) and is_red(h.r):
-        flip_colors(h)
-    return h
-def cmp(x1, y1, x2, y2):
-    if x1 < x2: return -1
-    if x2 < x1: return +1
-    if y1 >= y2: return -1
-    if y2 <  y1: return 1
-    return 0
-class Intervals:
-    def __init__(self, lo, hi):
-        self.root = Interval(lo, hi)
-    def _split(self, h, lo, hi):
-        if h is None: return
-        if not intersects(lo, hi, h.lo, h.hi):   return h
-        if l contains(h.l.inf, h.l.sup, lo, hi): return _split(h.l, h.r)
-        if contains(h.lo, h.hi, lo, hi):
+import time
 
-    def add(self, lo, hi):
-        self.root = self._add(self.root, lo, hi)
-        self.root.clr = BLACK
-    def _add(self, h, lo, hi):
-        if h is None: return Interval(lo, hi)
-        c = cmp(lo, hi, h.lo, h.hi)
-        if   c < 0: h.l = self._add(h.l, lo, hi)
-        elif c > 0: h.r = self._add(h.r, lo, hi)
-        else:       return h
-
-        fix(h)
-        return balance(h)
-    def any_sub(self, lo, hi):
-        """any_sub(lo, hi)
-checks if tree contains any interval which is subset of given [lo, hi]"""
-        return _any_sub(self.root, lo, hi)
-    def _any_sub(self, h, lo, hi):
-        if h is None: return False
-        if not intersects(lo, hi, h.inf, h.sup): return False
-        if contains(lo, hi, h.lo, h.hi): return True
-        if self._any_sub(h.l, lo, hi): return True
-        if self._any_sub(h.r, lo, hi): return True
-        return False
+def count(n, m, perm, bads):
+    i, j = 0, 0
+    c = 0
+    while i < n and j < n:
+        while j < n:
+            v   = perm[j]
+            if bads[j] is not None:
+                new_i = bads[j] + 1
+                dc = (j - i + 1)*(j - i)//2 - (j - new_i + 1)*(j - new_i)//2
+#                print('(%d, %d, %d): %d'%(i, new_i - 1, j, dc))
+                c += dc
+                i = new_i
+            j += 1
+    j -= 1
+    dc = (j - i + 2)*(j - i + 1)//2
+#    print('(%d, %d): %d'%(i, j, dc))
+    c += dc
+    return c
 
 if __name__ == '__main__':
+    t = time.time()
     n, m = [int(x) for x in input().split()]
-    perm = [int(x) for x in input().split()]
-    intervals = Intervals()
+    perm = [int(x) - 1 for x in input().split()]
+    inv_perm = [None for i in range(n)]
+    bads = [None for i in range(n)]
+    for i in range(n): inv_perm[perm[i]] = i
     for i in range(m):
         a, b = [int(x) for x in input().split()]
-        intervals.add(a, b)
-
+        a, b = a-1, b-1
+        i_a = inv_perm[a]
+        i_b = inv_perm[b]
+        if i_a < i_b:
+            bads[i_b] = max(bads[i_b] or -1, i_a)
+        else:
+            bads[i_a] = max(bads[i_a] or -1, i_b)
+    print('%f sec wasted for input'%(time.time() - t))
+    print(bads)
+    t = time.time()
+    print(count(n, m, perm, bads))
+    print('%f sec for counting'%(time.time() - t))
