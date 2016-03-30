@@ -6,12 +6,16 @@ def ccw(a, b, c):
 def countccw(points):
     c = 0
     for i in range(len(points)-2):
-        if ccw(points[i], points[i+1], points[i+2]): c += 1
+        p1, p2, p3 = points[i], points[i+1], points[i+2]
+        p4 = points[i+3] if i < len(points)-3 else points[0]
+        if ccw(p1, p2, p3) and not ccw(p2, p3, p4): c += 1
     return c
 def countcw(points):
     c = 0
     for i in range(len(points)-2):
-        if not ccw(points[i], points[i+1], points[i+2]): c += 1
+        p1, p2, p3 = points[i], points[i+1], points[i+2]
+        p4 = points[i+3] if i < len(points)-3 else points[0]
+        if not ccw(p1, p2, p3) and ccw(p2, p3, p4): c += 1
     return c
 if __name__ == '__main__':
     n = int(input())
