@@ -34,11 +34,11 @@ int main() {
   
   for (int i = 0, n_i; i < n; i = n_i) {
     int reg = cc[i].region;
-    int dups = 0;
+    int sec = 0;
     for (n_i = i+1; n_i < n && cc[n_i].region == reg; ++n_i) {
-      if (cc[n_i].score == cc[n_i - 1].score) ++dups;
+      if (cc[n_i].score == cc[i+1].score) ++sec;
     }
-    if (!dups && n_i > i+1) regs[reg] = i;
+    if (sec < 2) regs[reg] = i;
   }
 
   for (auto it = regs.begin(); it != regs.end(); ++it) {
