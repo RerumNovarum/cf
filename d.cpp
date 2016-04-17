@@ -1,4 +1,6 @@
 #ifndef FLOWNET
+#define FLOWNET
+
 #include <iostream>
 #include <vector>
 #include <deque>
@@ -7,8 +9,8 @@
 using namespace std;
 
 struct FlowEdge {
-  double c;
-  double f;
+  int c;
+  int f;
   int u, v;
 
   int other(int w) {
@@ -19,23 +21,18 @@ struct FlowEdge {
     if (w == this->v) this->f += add;
     else this->f -= add;
   }
-  double flowTo(int w) {
-    if (w == this->v) return this->f;
-    return this->c - this->f;
-  } 
-  double capTo(int w) {
+  int capTo(int w) {
     if (this->v == w) return this->c - this->f;
     else return this->f;
   }
 };
 struct FlowNet {
-  vector<vector<FlowEdge>> g;
+  vector< vector<FlowEdge> > g;
   int n;
-  FlowNet(int n) {
-    g = vector<vector<FlowEdge>>(n);
+  explicit FlowNet(int n) : g(vector< vector<FlowEdge> >(n)) {
     this->n = n;
   }
-  void addEdge(int u, int v, double c) {
+  void addEdge(int u, int v, int c) {
     FlowEdge e;
     e.u = u;
     e.v = v;
@@ -48,25 +45,49 @@ struct FlowNet {
 class MaxFlow {
   private:
     FlowNet &net;
-    int s, t; // src, target
     vector<FlowEdge*> edgeTo;
     deque<int> q;
     list<int> edgeTo_changed;
-    double maxFlow;
 
-    void search_clear();
-    bool search();
+    void search_clear() {
+      q.clear();
+      for (auto it = edgeTo_changed.begin(); it != edgeTo_changed.end(); ++it)
+        edgeTo[*it] = nullptr;
+      edgeTo_changed.clear();
+    }
+    bool search(int s, int t) {
+      this->search_clear();
+      q.push_back(s);
+
+      while(q.size() != 0) {
+        int u = q.front();
+        q.pop_front();
+        if (u == t) {
+          return true;
+        }
+        vector<FlowEdge>& adj = net.g[u];
+        for (auto it = adj.begin(); it != adj.end(); ++it) {
+          FlowEdge *e = &(*it);
+          int v = e->other(u);
+          int c = e->capTo(v);
+          if (c > 0 && edgeTo[v] == nullptr) {
+            edgeTo[v] = e;
+            edgeTo_changed.push_back(v);
+            q.push_back(v);
+          }
+        }
+      }
+    }
   public:
-    MaxFlow(FlowNet &flownet) : net(flownet) {
+    explicit MaxFlow(FlowNet &flownet) : net(flownet) {
       this->edgeTo = vector<FlowEdge*>(net.n);
+      for (int i = 0; i < net.n; ++i) {
+        this->edgeTo[i] = nullptr;
+      }
     }
     double max_flow(int s, int t) {
-      this->s = s;
-      this->t = t;
-      this->maxFlow = 0.0;
-      search_clear();
-
-      while (search()) {
+      double mf = 0;
+      while (search(s, t)) {
         double bottleneck = -1;
         for (int x = t; x != s; x = edgeTo[x]->other(x)) {
           if (edgeTo[x]->capTo(x) < bottleneck || bottleneck == -1) {
@@ -76,72 +97,45 @@ class MaxFlow {
         for (int x = t; x != s; x = edgeTo[x]->other(x)) {
           edgeTo[x]->addFlowTo(x, bottleneck);
         }
-        this->maxFlow += bottleneck;
-#ifdef DEBUG
-        cout << "found aug path" << endl;
-        cout << "+" << bottleneck << endl;
-#endif
+        mf += bottleneck;
       }
-      return this-> maxFlow;
+      return mf;
     }
 };
-void MaxFlow::search_clear() {
-  q.clear();
-  for (auto it = edgeTo_changed.begin(); it != edgeTo_changed.end(); ++it)
-    edgeTo[*it] = nullptr;
-  edgeTo_changed.clear();
-}
-bool MaxFlow::search() {
-  search_clear();
-  q.push_back(s);
-
-  while(q.size() != 0) {
-    int u = q.front();
-    q.pop_front();
-    if (u == t) {
-      return true;
-    }
-    vector<FlowEdge>& adj = net.g[u];
-    for (auto it = adj.begin(); it != adj.end(); ++it) {
-      FlowEdge *e = &(*it);
-      int v = e->other(u);
-      double c = e->capTo(v);
-      if (c > 0 && edgeTo[v] == nullptr) {
-        edgeTo[v] = e;
-        edgeTo_changed.push_back(v);
-        q.push_back(v);
-      }
-    }
-  }
-}
-double optimizeWeight(const FlowNet &network, int s, int t) {
+double optimizeWeight(const FlowNet &network, int x, int s, int t) {
   FlowNet net(network);
   MaxFlow mf(net);
   double l = 0;
-  double r = 1e6;
-  double f_max = 0;
+  double r = 1e6+1.;
   for (int i = 0; i < 100; ++i) {
     double f = (l+r)/2;
+    if (f == 0.0) continue;
     for (int i = 0; i < net.n; ++i) {
       for (int j = 0; j < net.g[i].size(); ++j) {
-        net.g[i][j].c = network[i][j].c/f; // probably, should use int capacity and floor
+        net.g[i][j].c = (int)(network.g[i][j].c/f);
         net.g[i][j].f = 0;
       }
     }
-    double bears_no = mf.max_flow(f);
-    double total_weight = bears_no*f;
-
+    int bears_no = mf.max_flow(s, t);
+    if (bears_no >= x) {
+      l = f;
+    } else {
+      r = f;
+    }
   }
+  return l*x;
 }
 int main() {
+  ios_base::sync_with_stdio(false);
   int n, m, x;
   cin >> n >> m >> x;
   FlowNet net(n);
   for (int i = 0; i < m ; ++i) {
     int a, b, c;
     cin >> a >> b >> c;
-    net.addEdge(a, b, (double) c);
+    net.addEdge(a-1, b-1, c);
   }
+  cout << optimizeWeight(net, x, 0, n-1);
   return 0;
 }
 #endif
