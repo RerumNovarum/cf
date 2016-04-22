@@ -9,8 +9,8 @@
 using namespace std;
 
 struct FlowEdge {
-  int c;
-  int f;
+  long long c;
+  long long f;
   int u, v;
 
   int other(int w) {
@@ -21,7 +21,7 @@ struct FlowEdge {
     if (w == this->v) this->f += add;
     else this->f -= add;
   }
-  int capTo(int w) {
+  long long capTo(int w) {
     if (this->v == w) return this->c - this->f;
     else return this->f;
   }
@@ -32,7 +32,7 @@ struct FlowNet {
   explicit FlowNet(int n) : g(vector< vector<FlowEdge> >(n)) {
     this->n = n;
   }
-  void addEdge(int u, int v, int c) {
+  void addEdge(int u, int v, long long c) {
     FlowEdge e;
     e.u = u;
     e.v = v;
@@ -69,7 +69,7 @@ class MaxFlow {
         for (auto it = adj.begin(); it != adj.end(); ++it) {
           FlowEdge *e = &(*it);
           int v = e->other(u);
-          int c = e->capTo(v);
+          long long c = e->capTo(v);
           if (c > 0 && edgeTo[v] == nullptr) {
             edgeTo[v] = e;
             edgeTo_changed.push_back(v);
@@ -77,6 +77,7 @@ class MaxFlow {
           }
         }
       }
+      return false;
     }
   public:
     explicit MaxFlow(FlowNet &flownet) : net(flownet) {
@@ -112,7 +113,7 @@ double optimizeWeight(const FlowNet &network, int x, int s, int t) {
     if (f == 0.0) continue;
     for (int i = 0; i < net.n; ++i) {
       for (int j = 0; j < net.g[i].size(); ++j) {
-        net.g[i][j].c = (int)(network.g[i][j].c/f);
+        net.g[i][j].c = (long long)(network.g[i][j].c/f);
         net.g[i][j].f = 0;
       }
     }
@@ -127,6 +128,7 @@ double optimizeWeight(const FlowNet &network, int x, int s, int t) {
 }
 int main() {
   ios_base::sync_with_stdio(false);
+  cout.precision(15);
   int n, m, x;
   cin >> n >> m >> x;
   FlowNet net(n);
