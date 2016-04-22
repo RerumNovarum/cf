@@ -2,13 +2,13 @@ import java.io.*;
 import java.util.Comparator;
 import java.util.TreeSet;
 
-public class Main {
+public class TaskC {
 
     public static void main(String[] args) throws IOException {
         // write your code here
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(System.out));
-        Task527C solver = new Main().new Task527C(reader, writer);
+        Task527C solver = new TaskC().new Task527C(reader, writer);
         solver.solve();
         writer.close();
     }
